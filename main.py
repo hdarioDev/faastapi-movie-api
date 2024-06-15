@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
-from typing import List
+from pydantic import BaseModel, Field
+from typing import List, Optional
 
 
 app = FastAPI()
@@ -9,17 +9,17 @@ app.description = "This is a fantastic API"
 app.version = "1.0.0"
 
 class Movie(BaseModel):
-    id: int
-    title: str
-    overview: str
-    year: int
-    rating: float
-    category: str
+    id: Optional[int] = None
+    title: str = Field(..., title="The title of the movie", min_length=1, max_length=100)
+    overview: str = Field(..., title="The overview of the movie", min_length=1, max_length=500)
+    year: int = Field(..., title="The year of the movie", ge=1900, le=2100)
+    rating: float = Field(..., title="The rating of the movie", ge=0, le=10)
+    category: str = Field(..., title="The category of the movie", min_length=1, max_length=50)
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
-                "id": 3,
+                "id": 1,
                 "title": "Inception",
                 "overview": "A thief who steals corporate secrets through the use of dream-sharing technology...",
                 "year": 2010,
