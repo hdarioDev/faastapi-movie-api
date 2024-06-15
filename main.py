@@ -65,3 +65,11 @@ def update_movie(id: int, movie: Movie):
             movies[i] = movie
             return movie
     return {}
+
+@app.delete('/movies/{id}', tags=['Movies'], response_model=Movie)
+def delete_movie(id: int):
+    for i, item in enumerate(movies):
+        if item.id == id:
+            movies.pop(i)
+            return item
+    return {}
