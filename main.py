@@ -29,5 +29,12 @@ def read_root():
     return {"Hello": "World"}
 
 @app.get('/movies', tags=['Movies'])
-def read_movies():
+def get_movies():
     return movies
+
+@app.get('/movies/{id}', tags=['Movies'])
+def get_movie(id: int):
+    for movie in movies:
+        if movie['id'] == id:
+            return movie
+    return []
