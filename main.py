@@ -45,10 +45,15 @@ def get_movies():
 @app.get('/movies/{id}', tags=['Movies'], response_model=Movie)
 def get_movie(id: int):
     for movie in movies:
-        if movie['id'] == id:
+        if movie.id == id:
             return movie
     return []
 
 @app.get('/movies/', tags=['Movies'], response_model=List[Movie])
 def get_movies_by_year(year: int):
-    return [item for item in movies if item['year'] == year]
+    return [item for item in movies if item.year == year]
+
+@app.post('/movies', tags=['Movies'])
+def create_movie(movie: dict):
+    movies.append(movie)
+    return movie
