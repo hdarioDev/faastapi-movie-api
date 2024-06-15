@@ -39,27 +39,27 @@ def read_root():
     return {"Hello": "World"}
 
 @app.get('/movies', tags=['Movies'], response_model=List[Movie])
-def get_movies():
+def get_movies() -> List[Movie]:
     return movies
 
 @app.get('/movies/{id}', tags=['Movies'], response_model=Movie)
-def get_movie(id: int = Path(ge=1)):
+def get_movie(id: int = Path(ge=1)) -> Movie:
     for movie in movies:
         if movie.id == id:
             return movie
     return []
 
 @app.get('/movies/', tags=['Movies'], response_model=List[Movie])
-def get_movies_by_year(year: int = Query( ge=1900, le=2100)):
+def get_movies_by_year(year: int = Query( ge=1900, le=2100)) -> List[Movie]:
     return [item for item in movies if item.year == year]
 
 @app.post('/movies', tags=['Movies'], response_model=Movie)
-def create_movie(movie: Movie):
+def create_movie(movie: Movie) -> Movie:
     movies.append(movie)
     return movie
 
 @app.put('/movies/{id}', tags=['Movies'], response_model=Movie)
-def update_movie(id: int, movie: Movie):
+def update_movie(id: int, movie: Movie) -> Movie:
     for i, item in enumerate(movies):
         if item.id == id:
             movies[i] = movie
@@ -67,7 +67,7 @@ def update_movie(id: int, movie: Movie):
     return {}
 
 @app.delete('/movies/{id}', tags=['Movies'], response_model=Movie)
-def delete_movie(id: int):
+def delete_movie(id: int) -> Movie:
     for i, item in enumerate(movies):
         if item.id == id:
             movies.pop(i)
