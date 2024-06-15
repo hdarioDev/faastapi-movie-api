@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Path, Query
+from fastapi import FastAPI, HTTPException, Path, Query, status
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
@@ -40,6 +40,8 @@ def read_root():
 
 @app.get('/movies', tags=['Movies'], response_model=List[Movie])
 def get_movies() -> List[Movie]:
+    if not movies:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No movies found")
     return movies
 
 @app.get('/movies/{id}', tags=['Movies'], response_model=Movie)
@@ -47,13 +49,16 @@ def get_movie(id: int = Path(ge=1)) -> Movie:
     for movie in movies:
         if movie.id == id:
             return movie
-    return []
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found")
 
 @app.get('/movies/', tags=['Movies'], response_model=List[Movie])
 def get_movies_by_year(year: int = Query( ge=1900, le=2100)) -> List[Movie]:
-    return [item for item in movies if item.year == year]
+    filtered_movies = [item for item in movies if item.year == year]
+    if not filtered_movies:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No movies found for the given year")
+    return filtered_movies
 
-@app.post('/movies', tags=['Movies'], response_model=Movie)
+@app.post('/movies', tags=['Movies'], response_model=Movie, status_code=status.HTTP_201_CREATED)
 def create_movie(movie: Movie) -> Movie:
     movies.append(movie)
     return movie
@@ -64,7 +69,7 @@ def update_movie(id: int, movie: Movie) -> Movie:
         if item.id == id:
             movies[i] = movie
             return movie
-    return {}
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found")
 
 @app.delete('/movies/{id}', tags=['Movies'], response_model=Movie)
 def delete_movie(id: int) -> Movie:
@@ -72,4 +77,5 @@ def delete_movie(id: int) -> Movie:
         if item.id == id:
             movies.pop(i)
             return item
-    return {}
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found")
+
