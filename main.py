@@ -53,7 +53,15 @@ def get_movie(id: int):
 def get_movies_by_year(year: int):
     return [item for item in movies if item.year == year]
 
-@app.post('/movies', tags=['Movies'])
-def create_movie(movie: dict):
+@app.post('/movies', tags=['Movies'], response_model=Movie)
+def create_movie(movie: Movie):
     movies.append(movie)
     return movie
+
+@app.put('/movies/{id}', tags=['Movies'], response_model=Movie)
+def update_movie(id: int, movie: Movie):
+    for i, item in enumerate(movies):
+        if item.id == id:
+            movies[i] = movie
+            return movie
+    return {}
