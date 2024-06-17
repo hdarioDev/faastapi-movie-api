@@ -3,9 +3,12 @@ from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 from typing import List, Optional
+from config.database import engine, Base
+
 
 from model import User
 from utils import create_token, decode_token
+from models.movie import Movie as MovieModel
 
 
 app = FastAPI()
@@ -14,6 +17,8 @@ app.description = "This is a fantastic API"
 app.version = "1.0.0"
 
 http_bearer = HTTPBearer()
+
+Base.metadata.create_all(bind=engine)
 
 
 class Movie(BaseModel):
