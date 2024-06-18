@@ -3,7 +3,8 @@ from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 from typing import List, Optional
-from config.database import engine, Base
+from config.database import engine, Base, get_db
+from sqlalchemy.orm import Session
 
 
 from model import User
@@ -72,43 +73,48 @@ def read_users_me(credentials: HTTPAuthorizationCredentials = Depends(http_beare
     return {"email": decoded_token["sub"]}
 
 @app.get('/movies', tags=['Movies'], response_model=List[Movie], dependencies=[Depends(http_bearer)])
-def get_movies() -> List[Movie]:
+def get_movies(db: Session = Depends(get_db)) -> List[Movie]:
+    movies = db.query(MovieModel).all()
     if not movies:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No movies found")
     return movies
 
 @app.get('/movies/{id}', tags=['Movies'], response_model=Movie, dependencies=[Depends(http_bearer)])
-def get_movie(id: int = Path(ge=1)) -> Movie:
-    for movie in movies:
-        if movie.id == id:
-            return movie
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found")
+def get_movie(id: int = Path(ge=1), db: Session = Depends(get_db)) -> Movie:
+    fmovie = db.query(MovieModel).filter(MovieModel.id == id).first()
+    if fmovie is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found")
+    return fmovie
 
 @app.get('/movies/', tags=['Movies'], response_model=List[Movie], dependencies=[Depends(http_bearer)])
-def get_movies_by_year(year: int = Query( ge=1900, le=2100)) -> List[Movie]:
-    filtered_movies = [item for item in movies if item.year == year]
-    if not filtered_movies:
+def get_movies_by_year(year: int = Query( ge=1900, le=2100), db: Session = Depends(get_db)) -> List[Movie]:
+    movies = db.query(MovieModel).filter(MovieModel.year == year).all()
+    if not movies:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No movies found for the given year")
-    return filtered_movies
+    return movies
 
 @app.post('/movies', tags=['Movies'], response_model=Movie, status_code=status.HTTP_201_CREATED, dependencies=[Depends(http_bearer)])
-def create_movie(movie: Movie) -> Movie:
-    movies.append(movie)
+def create_movie(movie: Movie, db: Session = Depends(get_db)) -> Movie:
+    new_movie = MovieModel(**movie.dict())
+    db.add(new_movie)
+    db.commit()
     return movie
 
 @app.put('/movies/{id}', tags=['Movies'], response_model=Movie, dependencies=[Depends(http_bearer)])
-def update_movie(id: int, movie: Movie) -> Movie:
-    for i, item in enumerate(movies):
-        if item.id == id:
-            movies[i] = movie
-            return movie
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found")
+def update_movie(id: int, movie: Movie, db: Session = Depends(get_db)) -> Movie:
+    fmovie = db.query(MovieModel).filter(MovieModel.id == id).first()
+    if fmovie is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found")
+    for key, value in movie.dict().items():
+        setattr(fmovie, key, value)
+    db.commit()
+    return movie
 
 @app.delete('/movies/{id}', tags=['Movies'], response_model=Movie, dependencies=[Depends(http_bearer)])
-def delete_movie(id: int) -> Movie:
-    for i, item in enumerate(movies):
-        if item.id == id:
-            movies.pop(i)
-            return item
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found")
-
+def delete_movie(id: int, db: Session = Depends(get_db)) -> Movie:
+    fmovie = db.query(MovieModel).filter(MovieModel.id == id).first()
+    if fmovie is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Movie not found")
+    db.delete(fmovie)
+    db.commit()
+    return fmovie
