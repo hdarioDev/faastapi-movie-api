@@ -7,6 +7,7 @@ from config.database import engine, Base, get_db
 from sqlalchemy.orm import Session
 
 
+from midlewares.error_handler import ErrorHandler
 from model import User
 from utils import create_token, decode_token
 from models.movie import Movie as MovieModel
@@ -17,6 +18,7 @@ app.title = "My API"
 app.description = "This is a fantastic API"
 app.version = "1.0.0"
 
+app.add_middleware(ErrorHandler)
 http_bearer = HTTPBearer()
 
 Base.metadata.create_all(bind=engine)
