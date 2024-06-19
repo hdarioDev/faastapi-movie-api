@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from config.database import engine, Base
 
 from midlewares.error_handler import ErrorHandler
-from routers.movie import movie_router
+from routers.movie_router import movie_router
 from routers.user import user_router
 
 
